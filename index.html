@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>偉誠的試煉：冒險篇</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --parchment-dark: #2c241b; /* 深色羊皮紙 */
+            --parchment-light: #eaddcf; /* 文字顏色 */
+            --gold: #d4af37;
+            --gold-glow: #ffd700;
+            --blood-red: #8a0303;
+            --modal-overlay: rgba(0, 0, 0, 0.85);
+            --correct-green: #2e7d32;
+            --wrong-red: #c62828;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            font-family: 'Noto Serif TC', serif; /* 全域襯線體 */
+            color: var(--parchment-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* 主容器：深色羊皮紙風格 */
+        .game-container {
+            background-color: var(--parchment-dark);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border: 4px double var(--gold);
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9), inset 0 0 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            text-align: center;
+            transition: transform 0.1s; /* 用於震動效果 */
+        }
+
+        /* 裝飾性角落 */
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gold);
+            transition: all 0.3s ease;
+        }
+        .top-left { top: 5px; left: 5px; border-right: 0; border-bottom: 0; }
+        .top-right { top: 5px; right: 5px; border-left: 0; border-bottom: 0; }
+        .bottom-left { bottom: 5px; left: 5px; border-right: 0; border-top: 0; }
+        .bottom-right { bottom: 5px; right: 5px; border-left: 0; border-top: 0; }
+
+        /* 文字排版 */
+        h1, h2, h3 {
+            font-family: 'Noto Serif TC', serif;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .title-large {
+            font-size: 2.2rem;
+            color: var(--gold);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+
+        .title-sub {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .quest-number {
+            font-family: 'Cinzel', serif; /* 英數字體 */
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            display: block;
+            letter-spacing: 1px;
+        }
+
+        .quest-content {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-align: left; /* 題目內容靠左讀起來較舒適，也可置中 */
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 進度條區域 */
+        .progress-area {
+            margin-bottom: 20px;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--gold);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 auto 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #b8860b, var(--gold));
+            width: 0%;
+            transition: width 0.3s ease-out;
+            box-shadow: 0 0 10px var(--gold);
+        }
+
+        .progress-text {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        /* 按鈕樣式 (一般按鈕與選項) */
+        button {
+            background: rgba(20, 20, 20, 0.6);
+            color: var(--parchment-light);
+            border: 1px solid var(--gold);
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-family: 'Noto Serif TC', serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+            width: 100%;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* 特殊按鈕：開始與傳送 */
+        .btn-primary {
+            background: linear-gradient(180deg, #3e2723 0%, #1a100c 100%);
+            border: 2px solid var(--gold);
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin-top: 20px;
+        }
+        
+        .btn-teleport {
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            border: 2px solid #4fc3f7;
+            color: #fff;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 195, 247, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(79, 195, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 195, 247, 0); }
+        }
+
+        /* 選項正確與錯誤狀態 */
+        .opt-correct {
+            background: var(--correct-green) !important;
+            color: white !important;
+            border-color: #4caf50 !important;
+        }
+        
+        .opt-wrong {
+            background: var(--blood-red) !important;
+            color: white !important;
+            border-color: #ff5252 !important;
+        }
+
+        .opt-dimmed {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* 奧樂雞互動視窗 (Modal) */
+        #modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-overlay);
+            display: none; /* 預設隱藏 */
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            text-align: center;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-family: 'Noto Serif TC', serif;
+        }
+
+        /* 發光呼吸效果 */
+        .glow-text {
+            color: var(--gold-glow);
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #b8860b, 0 0 20px #b8860b; }
+            to { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700; }
+        }
+
+        .ology-img {
+            max-width: 250px;
+            max-height: 250px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 震動動畫 */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .shaking {
+            animation: shake 0.5s;
+        }
+
+        /* 隱藏元素工具 */
+        .hidden { display: none !important; }
+
+        /* 音樂控制按鈕 (右上角) */
+        #music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            margin: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_24921ff979.mp3?filename=fantasy-orchestral-background-music-124633.mp3" type="audio/mpeg">
+        您的瀏覽器不支援音樂播放。
+    </audio>
+    <button id="music-control" onclick="toggleMusic()">♪</button>
+
+    <div id="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modal-title" class="modal-title glow-text"></h2>
+            <img id="modal-img" src="" alt="Ology" class="ology-img">
+        </div>
+    </div>
+
+    <div class="game-container" id="game-app">
+        <div class="corner top-left"></div>
+        <div class="corner top-right"></div>
+        <div class="corner bottom-left"></div>
+        <div class="corner bottom-right"></div>
+
+        <div id="screen-welcome">
+            <h1 class="title-large">偉誠傳說</h1>
+            <p class="title-sub">完成支線任務</p>
+            <div style="margin: 40px 0;">
+                <p>冒險者啊，要開啟傳送門，<br>你必須證明你對這個世界的理解。</p>
+            </div>
+            <button class="btn-primary" onclick="startGame()">接受試煉</button>
+        </div>
+
+        <div id="screen-game" class="hidden">
+            <div class="progress-area">
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-bar"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="current-q-num">1</span> / 10
+                </div>
+            </div>
+
+            <span class="quest-number" id="quest-label">試煉一</span>
+            <div class="quest-content" id="quest-text">題目載入中...</div>
+            
+            <div id="options-container">
+                </div>
+        </div>
+
+        <div id="screen-result" class="hidden">
+            <h1 class="title-large" id="end-title"></h1>
+            <p id="end-subtitle" style="white-space: pre-line; margin-bottom: 20px; line-height: 1.6;"></p>
+            <h2 style="color: var(--gold); font-size: 2rem; margin-bottom: 30px;">得分：<span id="final-score"></span></h2>
+            
+            <div id="end-actions">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // 資料設定區 (請在此處填入您的連結)
+        // ============================================
+        
+        // 奧樂雞圖片 (請填入圖片網址，例如 Imgur 連結)
+        // 如果沒有填入，會顯示預設佔位圖
+        const imgPraise = "https://via.placeholder.com/300x300/2e7d32/ffffff?text=Great+Job!"; // 建議替換為您的稱讚圖連結
+        const imgPunch = "https://via.placeholder.com/300x300/c62828/ffffff?text=PUNCH!!";   // 建議替換為您的揍人圖連結
+        
+        // 結局傳送門連結 (Google Drive)
+        const teleportLink = "https://drive.google.com"; // 請替換為您的 Google Drive 連結
+
+        // ============================================
+        // 題目資料 (C-2)
+        // ============================================
+        const questions = [
+            {
+                q: "下列哪個名字不是指偉誠寶貝？",
+                options: ["Wilism", "Wei cheng", "Ology", "Osmine"],
+                ans: 2 // 0,1,2,3 -> 對應 C
+            },
+            {
+                q: "偉誠寶貝的星座為何？",
+                options: ["雙子座 Gemini", "處女座 Virgo", "射手座 Sagittarius", "水瓶座 Aquarius"],
+                ans: 0 // 對應 A
+            },
+            {
+                q: "偉誠寶貝的血型為何？",
+                options: ["A-", "A+", "B-", "B+"],
+                ans: 3 // 對應 B+ (D是第4個選項) -> 等等，題目是 (A)A- (B)A+ (C)B- (D)B+ 答案B。所以是index 1。
+                // 修正：答案是 (B) A+ ?? 不對，題目寫「答案：B」，選項B是A+。
+                // 請確認：如果題目原意是 B型，那選項應該怎麼排？
+                // 依照您給的文字：(A)A- (B)A+ (C)B- (D)B+，答案是 B。
+                // 所以正確選項索引是 1。
+            },
+            {
+                q: "下列何者不屬於毀滅性的生化武器？",
+                options: ["炭疽桿菌", "沙林毒氣", "芹菜", "薏仁"],
+                ans: 3 // 對應 D
+            },
+            {
+                q: "相傳奧樂雞最愛粉嫩的舒肥雞胸肉？",
+                options: ["正確", "錯誤"],
+                ans: 0 // 對應 正確
+            },
+            {
+                q: "當您猶豫不決時，偉誠能幫忙一起想、一起分析，出主意但不搶決定，_______仍在您手上！",
+                options: ["投票權", "選擇權", "否決權", "主導權"],
+                ans: 1 // 對應 B
+            },
+            {
+                q: "「樹妖」是擁有美麗外表的植物系魔物，性格平易近人、善於社交，深受村民愛戴。",
+                options: ["正確", "錯誤"],
+                ans: 1 // 對應 錯誤
+            },
+            {
+                q: "在神秘之地 (Mystic Land) 的冒險過程中，哪種魔物從未出現過？",
+                options: ["蝙蝠", "走路菇", "魔狼", "炎龍"],
+                ans: 3 // 對應 D
+            },
+            {
+                q: "何以形容憨雞與奧樂雞之間那錯綜複雜的關係？",
+                options: ["亦敵亦友", "比翼雙飛", "手足之情", "師徒之誼"],
+                ans: 0 // 對應 A
+            },
+            {
+                q: "憨雞與奧樂雞的思想主張分別為何？",
+                options: ["烏托邦社會主義、社會達爾文主義", "社會達爾文主義、烏托邦社會主義", "自由意志主義、效益主義", "效益主義、自由意志主義"],
+                ans: 0 // 對應 A
+            }
+        ];
+
+        // 針對第3題特別修正邏輯確認
+        // 題目原意：(A)A- (B)A+ (C)B- (D)B+，答案：B。
+        // 所以索引值應為 1。
+        questions[2].ans = 1; 
+
+        // ============================================
+        // 遊戲邏輯變數
+        // ============================================
+        let currentIdx = 0;
+        let score = 0;
+        let isLocked = false; // 防止重複點擊
+
+        // DOM 元素
+        const screenWelcome = document.getElementById('screen-welcome');
+        const screenGame = document.getElementById('screen-game');
+        const screenResult = document.getElementById('screen-result');
+        const gameContainer = document.getElementById('game-app');
+        
+        const labelQ = document.getElementById('quest-label');
+        const textQ = document.getElementById('quest-text');
+        const containerOpt = document.getElementById('options-container');
+        const progressBar = document.getElementById('progress-bar');
+        const numCurrent = document.getElementById('current-q-num');
+
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalImg = document.getElementById('modal-img');
+        const bgm = document.getElementById('bgm');
+
+        // 音樂控制
+        function toggleMusic() {
+            if (bgm.paused) {
+                bgm.play().catch(e => console.log("需使用者互動才能播放"));
+            } else {
+                bgm.pause();
+            }
+        }
+
+        // 開始遊戲
+        function startGame() {
+            screenWelcome.classList.add('hidden');
+            screenResult.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+            
+            // 嘗試播放音樂
+            bgm.volume = 0.5;
+            bgm.play().catch(e => console.log("瀏覽器阻擋自動播放"));
+
+            currentIdx = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        // 載入題目
+        function loadQuestion() {
+            isLocked = false;
+            // 更新進度
+            const q = questions[currentIdx];
+            const progressPercent = ((currentIdx) / questions.length) * 100; // 進度條只算已完成的
+            
+            progressBar.style.width = `${progressPercent}%`;
+            numCurrent.innerText = currentIdx + 1;
+            
+            // 中文數字轉換 (簡單版 1-10)
+            const cnNums = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+            labelQ.innerText = `試煉${cnNums[currentIdx]}`;
+            textQ.innerText = q.q;
+
+            // 產生選項
+            containerOpt.innerHTML = '';
+            q.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.innerText = optText;
+                btn.onclick = () => checkAnswer(index, btn);
+                containerOpt.appendChild(btn);
+            });
+        }
+
+        // 檢查答案
+        function checkAnswer(selectedIndex, btnElem) {
+            if (isLocked) return;
+            isLocked = true;
+
+            const correctIndex = questions[currentIdx].ans;
+            const allBtns = containerOpt.querySelectorAll('button');
+
+            if (selectedIndex === correctIndex) {
+                // --- 答對 ---
+                score += 10;
+                btnElem.classList.add('opt-correct');
+                
+                // 其他選項變暗
+                allBtns.forEach((b, i) => {
+                    if (i !== selectedIndex) b.classList.add('opt-dimmed');
+                });
+
+                showModal(true);
+
+                setTimeout(() => {
+                    closeModal();
+                    nextQuestion();
+                }, 1000); // 1秒後消失
+
+            } else {
+                // --- 答錯 ---
+                btnElem.classList.add('opt-wrong');
+                // 顯示正確答案
+                allBtns[correctIndex].classList.add('opt-correct');
+                
+                // 其他選項變暗
+                allBtns.forEach((b, i) => {
+                    if (i !== selectedIndex && i !== correctIndex) b.classList.add('opt-dimmed');
+                });
+
+                // 畫面震動
+                gameContainer.classList.add('shaking');
+                setTimeout(() => gameContainer.classList.remove('shaking'), 500);
+
+                showModal(false);
+
+                setTimeout(() => {
+                    closeModal();
+                    nextQuestion();
+                }, 1500); // 1.5秒後消失
+            }
+        }
+
+        function showModal(isCorrect) {
+            modalOverlay.style.display = 'flex';
+            if (isCorrect) {
+                modalTitle.innerText = "絕妙的一擊！";
+                modalImg.src = imgPraise;
+            } else {
+                modalTitle.innerText = "吃我一拳！愚蠢的人類！";
+                modalImg.src = imgPunch;
+            }
+        }
+
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+        }
+
+        function nextQuestion() {
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                loadQuestion();
+            } else {
+                // 補滿進度條
+                progressBar.style.width = '100%';
+                showResult();
+            }
+        }
+
+        // 顯示結果
+        function showResult() {
+            screenGame.classList.add('hidden');
+            screenResult.classList.remove('hidden');
+            
+            const title = document.getElementById('end-title');
+            const sub = document.getElementById('end-subtitle');
+            const scoreSpan = document.getElementById('final-score');
+            const actions = document.getElementById('end-actions');
+            
+            scoreSpan.innerText = score;
+            actions.innerHTML = ''; // 清空按鈕
+
+            if (score === 100) {
+                // 結局 A
+                title.innerText = "太神啦！你根本是偉誠肚子裡的蛔蟲！";
+                sub.innerHTML = "【系統公告】<br>支線任務完成，傳送門已開啟。";
+                
+                const btn = document.createElement('button');
+                btn.className = 'btn-primary btn-teleport';
+                btn.innerHTML = "✨ 點擊傳送 ✨";
+                btn.onclick = () => window.location.href = teleportLink;
+                actions.appendChild(btn);
+
+            } else if (score >= 60) {
+                // 結局 B
+                title.innerText = "加油！快成為偉誠肚子裡的蛔蟲了！";
+                sub.innerText = "還差一點點，要不要再試一次？";
+                
+                const btn = document.createElement('button');
+                btn.className = 'btn-primary';
+                btn.innerText = "重啟試煉";
+                btn.onclick = () => location.reload(); // 簡單重整回首頁
+                actions.appendChild(btn);
+
+            } else {
+                // 結局 C
+                title.innerText = "再接再厲，請多攝取高蛋白。";
+                sub.innerText = "奧樂雞對你的表現感到遺憾。";
+                
+                const btn = document.createElement('button');
+                btn.className = 'btn-primary';
+                btn.innerText = "重啟試煉";
+                btn.onclick = () => location.reload();
+                actions.appendChild(btn);
+            }
+        }
+    </script>
+</body>
+</html>
